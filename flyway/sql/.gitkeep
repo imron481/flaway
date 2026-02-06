@@ -1,0 +1,6 @@
+-- SQL Migration Scripts Directory
+-- Place your versioned migration scripts here following the naming convention:
+-- V{version}__{description}.sql (e.g., V1__create_users_table.sql)
+--
+-- Repeatable migrations use: R__{description}.sql
+-- Undo migrations use: U{version}__{description}.sql
