@@ -1,11 +1,31 @@
 # GitHub Actions Workflow for Flyway Database Migrations
-# Simple Version Selection
+# Enhanced Version and Schema Selection
 
 name: Flyway Migration
 
 on:
   workflow_dispatch:
     inputs:
+      schema:
+        description: Pilih Schema
+        required: true
+        default: NTT_RISK_MODELLING
+        type: choice
+        options:
+          - NTT_USER
+          - NTT_APPROVAL
+          - NTT_AUDIT
+          - NTT_CUSTOM_REPORT
+          - NTT_DATA_MANAGENENT
+          - NTT_EMAIL_NOTIFICATION
+          - NTT_FILE_MANAGER
+          - NTT_HANGFIRE
+          - NTT_JOURNAL
+          - NTT_PARAMETER
+          - NTT_PLATFORM_SETTING
+          - NTT_PSAK413_IMPAIRMENT
+          - NTT_RISK_MODELLING
+          - NTT_WORKFLOW
       version:
         description: Pilih Versi Migration
         required: true
@@ -15,6 +35,7 @@ on:
           - all
           - v1
           - v2
+          - v3
           - info
 
 jobs:
@@ -26,32 +47,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Show Selected Version
-        run: echo "Selected Version - ${{ inputs.version }}"
+      - name: Show Configuration
+        run: |
+          echo "Schema: ${{ inputs.schema }}"
+          echo "Version: ${{ inputs.version }}"
 
       - name: Migrate ALL Versions
         if: ${{ inputs.version == 'all' }}
         uses: docker://flyway/flyway:10.0.0
         with:
-          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=NTT_RISK_MODELLING -locations=filesystem:./flyway/sql -baselineOnMigrate=true migrate
+          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} -baselineOnMigrate=true migrate
 
       - name: Migrate V1 Only
-        if: ${{ inputs.version == 'v1' }}
+        if: $continuation_token{ inputs.version == 'v1' }}
         uses: docker://flyway/flyway:10.0.0
         with:
-          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=NTT_RISK_MODELLING -locations=filesystem:./flyway/sql -baselineOnMigrate=true -target=1 migrate
+          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} -baselineOnMigrate=true -target=1 migrate
 
       - name: Migrate up to V2
         if: ${{ inputs.version == 'v2' }}
         uses: docker://flyway/flyway:10.0.0
         with:
-          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=NTT_RISK_MODELLING -locations=filesystem:./flyway/sql -baselineOnMigrate=true -target=2 migrate
+          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} -baselineOnMigrate=true -target=2 migrate
+
+      - name: Migrate up to V3
+        if: ${{ inputs.version == 'v3' }}
+        uses: docker://flyway/flyway:10.0.0
+        with:
+          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} -baselineOnMigrate=true -target=3 migrate
 
       - name: Show Migration Info
         if: ${{ inputs.version == 'info' }}
         uses: docker://flyway/flyway:10.0.0
         with:
-          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=NTT_RISK_MODELLING -locations=filesystem:./flyway/sql info
+          args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} info
 
       - name: Done
-        run: echo "Migration completed!"
+        run: echo "Migration for ${{ inputs.schema }} completed!"
