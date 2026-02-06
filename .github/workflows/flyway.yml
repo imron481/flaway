@@ -59,7 +59,7 @@ jobs:
           args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} -baselineOnMigrate=true migrate
 
       - name: Migrate V1 Only
-        if: $continuation_token{ inputs.version == 'v1' }}
+        if: ${{ inputs.version == 'v1' }}
         uses: docker://flyway/flyway:10.0.0
         with:
           args: -url=jdbc:oracle:thin:@//${{ secrets.FLYWAY_DB_HOST }}:${{ secrets.FLYWAY_DB_PORT }}/${{ secrets.FLYWAY_DB_SERVICE }} -user=${{ secrets.FLYWAY_DB_USER }} -password=${{ secrets.FLYWAY_DB_PASSWORD }} -schemas=${{ inputs.schema }} -locations=filesystem:./flyway/schemas/${{ inputs.schema }} -baselineOnMigrate=true -target=1 migrate
